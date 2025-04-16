@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Washing Machine Scheduling System</title>
+  <style>
+    /* --- Global Styles --- */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body,
+    html {
+      font-family: Arial, sans-serif;
+      background: #f7f7f7;
+      color: #333;
+      line-height: 1.6;
+    }
+    header {
+      background: #3a7bd5;
+      color: #fff;
+      padding: 20px;
+      text-align: center;
+    }
+    nav {
+      background: #2a5491;
+      padding: 15px;
+      color: #fff;
+      text-align: center;
+    }
+    nav ul {
+      list-style: none;
+      display: inline-flex;
+    }
+    nav li {
+      margin: 0 15px;
+      cursor: pointer;
+    }
+    .container {
+      max-width: 1100px;
+      margin: 20px auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* --- Scheduler Header --- */
+    .scheduler-header {
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-bottom: 20px;
+      gap: 10px;
+    }
+    .scheduler-header label {
+      margin-right: 5px;
+      font-weight: bold;
+    }
+    .scheduler-header input,
+    .scheduler-header select,
+    .scheduler-header button {
+      padding: 8px;
+      font-size: 1em;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+    }
+    .scheduler-header button {
+      background: #3a7bd5;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    .scheduler-header button:hover {
+      background: #2a5491;
+    }
+    
+    /* --- Time Slot Grid --- */
+    .slot-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+      gap: 10px;
+    }
+    .time-slot {
+      background: #e9ecef;
+      padding: 15px;
+      text-align: center;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .time-slot:hover {
+      background: #d4dadf;
+    }
+    .time-slot.booked {
+      background: #dc3545;
+      color: #fff;
+      cursor: not-allowed;
+    }
+    .time-slot.selected {
+      background: #28a745;
+      color: #fff;
+    }
+    
+    /* --- Modal Styles --- */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 10;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.6);
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-content {
+      background: #fff;
+      border-radius: 8px;
+      padding: 30px;
+      max-width: 500px;
+      width: 90%;
+      position: relative;
+    }
+    .modal-content h2 {
+      margin-bottom: 20px;
+    }
+    .modal-content label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    .modal-content input,
+    .modal-content select {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 15px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    .modal-content button {
+      background: #28a745;
+      color: #fff;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .close-modal {
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      font-size: 20px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    
+    footer {
+      text-align: center;
+      padding: 20px;
+      background: #2a5491;
+      color: #fff;
+      margin-top: 30px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Washing Machine Scheduling System</h1>
+    <p>Effortlessly schedule your washing machine time slots</p>
+  </header>
+  <nav>
+    <ul>
+      <li>Home</li>
+      <li>Schedule</li>
+      <li>My Bookings</li>
+      <li>Contact</li>
+    </ul>
+  </nav>
+  
+  <div class="container">
+    <div class="scheduler-header">
+      <div>
+        <label for="machineSelect">Select Machine:</label>
+        <select id="machineSelect">
+          <option value="Machine1">Washing Machine 1</option>
+          <option value="Machine2">Washing Machine 2</option>
+          <option value="Machine3">Washing Machine 3</option>
+        </select>
+      </div>
+      <div>
+        <label for="scheduleDate">Select Date:</label>
+        <input type="date" id="scheduleDate">
+      </div>
+      <div>
+        <button id="loadSchedule">Load Schedule</button>
+      </div>
+    </div>
+    
+    <div class="slot-grid" id="slotGrid">
+      <!-- Time slots will be dynamically generated here -->
+    </div>
+  </div>
+  
+  <!-- Modal for booking confirmation -->
+  <div id="bookingModal" class="modal">
+    <div class="modal-content">
+      <span class="close-modal" id="closeModal">&times;</span>
+      <h2>Schedule Booking</h2>
+      <form id="bookingForm">
+        <input type="hidden" id="modalMachine">
+        <input type="hidden" id="modalDate">
+        <input type="hidden" id="modalTimeSlot">
+        <label for="userName">Your Name</label>
+        <input type="text" id="userName" required placeholder="Enter your name">
+        <label for="contactInfo">Contact Info</label>
+        <input type="text" id="contactInfo" required placeholder="Email or Phone">
+        <button type="submit">Confirm Booking</button>
+      </form>
+    </div>
+  </div>
+  
+  <footer>
+    &copy; 2025 Washing Machine Scheduler. All rights reserved.
+  </footer>
+  
+  <script>
+    // Get DOM elements
+    const slotGrid = document.getElementById('slotGrid');
+    const bookingModal = document.getElementById('bookingModal');
+    const bookingForm = document.getElementById('bookingForm');
+    const closeModal = document.getElementById('closeModal');
+    const loadScheduleBtn = document.getElementById('loadSchedule');
+    
+    // Dummy booking data structure: { machine: { date: [timeSlots] } }
+    const bookings = {};
+    
+    // Format time slot label (e.g., 7:00 AM)
+    function formatTime(hour) {
+      const period = hour >= 12 ? 'PM' : 'AM';
+      let displayHour = hour % 12;
+      displayHour = displayHour ? displayHour : 12; // Converts 0 to 12
+      return displayHour + ':00 ' + period;
+    }
+    
+    // Generate time slots between 7 AM and 10 PM
+    function generateSlots() {
+      slotGrid.innerHTML = '';
+      for (let hour = 7; hour <= 22; hour++) {
+        const slot = document.createElement('div');
+        slot.classList.add('time-slot');
+        slot.dataset.time = hour;
+        slot.innerHTML = formatTime(hour);
+        slotGrid.appendChild(slot);
+      }
+    }
+    
+    // Load schedule for selected machine and date
+    loadScheduleBtn.addEventListener('click', function() {
+      const machine = document.getElementById('machineSelect').value;
+      const date = document.getElementById('scheduleDate').value;
+      if (!date) {
+        alert('Please select a date.');
+        return;
+      }
+      // Regenerate time slots
+      generateSlots();
+      
+      // If there are pre-booked slots, mark them as booked
+      if (bookings[machine] && bookings[machine][date]) {
+        const bookedSlots = bookings[machine][date];
+        bookedSlots.forEach(time => {
+          const slot = document.querySelector(`.time-slot[data-time="${time}"]`);
+          if (slot) {
+            slot.classList.add('booked');
+            slot.removeEventListener('click', openBookingModal);
+          }
+        });
+      }
+      
+      // Allow click on available time slots
+      const availableSlots = document.querySelectorAll('.time-slot:not(.booked)');
+      availableSlots.forEach(slot => {
+        slot.addEventListener('click', openBookingModal);
+      });
+    });
+    
+    // Open modal for booking when a time slot is clicked
+    function openBookingModal() {
+      const machine = document.getElementById('machineSelect').value;
+      const date = document.getElementById('scheduleDate').value;
+      const time = this.dataset.time;
+      
+      // Set hidden fields in the modal form
+      document.getElementById('modalMachine').value = machine;
+      document.getElementById('modalDate').value = date;
+      document.getElementById('modalTimeSlot').value = time;
+      
+      // Show modal
+      bookingModal.style.display = 'flex';
+    }
+    
+    // Close modal events
+    closeModal.addEventListener('click', function() {
+      bookingModal.style.display = 'none';
+    });
+    window.addEventListener('click', function(event) {
+      if (event.target == bookingModal) {
+        bookingModal.style.display = 'none';
+      }
+    });
+    
+    // Handle booking form submission
+    bookingForm.addEventListener('submit', function(event) {
+      event.preventDefault();
+      const machine = document.getElementById('modalMachine').value;
+      const date = document.getElementById('modalDate').value;
+      const time = document.getElementById('modalTimeSlot').value;
+      const userName = document.getElementById('userName').value;
+      const contactInfo = document.getElementById('contactInfo').value;
+      
+      // Initialize booking structure if needed
+      if (!bookings[machine]) bookings[machine] = {};
+      if (!bookings[machine][date]) bookings[machine][date] = [];
+      
+      // Save the booking slot
+      bookings[machine][date].push(time);
+      
+      alert(`Booking confirmed!\n${userName}, you have reserved ${machine} on ${date} at ${formatTime(time)}.`);
+      bookingModal.style.display = 'none';
+      bookingForm.reset();
+      
+      // Refresh schedule to show updated booking status
+      loadScheduleBtn.click();
+    });
+    
+    // Initialize time slots on page load
+    generateSlots();
+  </script>
+</body>
+</html>
+```
