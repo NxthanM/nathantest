@@ -332,7 +332,7 @@
       // Save the booking slot
       bookings[machine][date].push(time);
       
-      alert(`Booking confirmed!\n${userName}, you have reserved ${machine} on ${date} at ${formatTime(time)}.`);
+      alert(`Booking has been confirmed!\n${userName}, you have reserved ${machine} on ${date} at ${formatTime(time)}.`);
       bookingModal.style.display = 'none';
       bookingForm.reset();
       
